@@ -135,12 +135,14 @@ if (!$reportView) {
 	$xls_rc = 0;
 	$xls_cc = 0;
     $row_class = 'alterCellPrinted';
-    //$recapby = __('Classification');
-    $output = '<table class="s-table table table-sm table-bordered mb-0">';
-    // header
-    $output .= '<tr>
+
+    $output = '<table border="1">';
+    // // header
+    $output .= '<thead><tr>
         <th>'.__('Unit Rak dan Kolom').'</th>
-        <th>'.__('Eksemplar').'</th></tr>';
+        <th>'.__('Baris Rak').'</th>
+        <th>'.__('Lokasi Rak').'</th>
+        <th>'.__('Eksemplar').'</th></tr></thead>';
 	$xlsrows = array($xls_rc => array(__('Unit Rak'),__('Kolom Rak'),__('Baris Rak'),__('Eksemplar')));
 	$xls_rc++;
     
@@ -148,75 +150,119 @@ if (!$reportView) {
                                 SELECT DISTINCT CAST(rak AS CHAR)
                                 FROM
                                 (
-                                    SELECT 
+                                    SELECT
+                                    site, 
                                     SUBSTRING_INDEX(site, '-', 1) AS rak 
                                     FROM 
                                         item
                                 ) AS itemrak
-                                WHERE rak IS NOT NULL ORDER BY rak ASC;
+                                WHERE rak IS NOT NULL AND rak != '' ORDER BY rak ASC;
                                 ");
        
+     $output .= '<tbody>';
+     $dataKolomBaris = array(array());
      while ($lokasiRak_d = $lokasiRak_q->fetch_row()) {
         if ($lokasiRak_d[0]) {
           
             $output .= '<tr class="table-warning">';
             
-            //$unitRak_q = $dbs->query("SELECT DISTINCT SUBSTRING_INDEX(site, '-', 1) FROM item");
-            //$unitRak_d = $unitRak_q->fetch_row();
-            //while ($unitRak_d = $unitRak_q->fetch_row()) {
             $output .=  '<th>'.$lokasiRak_d[0].'</th>';
-            //}
 
+            $output .=  '<th>&nbsp;</th>';
+
+            $output .=  '<th>&nbsp;</th>';
             
+            $jumlah_item_q = $dbs->query("
+                                SELECT DISTINCT COUNT(item_id) AS jumlah_item
+                                FROM
+                                (
+                                    SELECT 
+                                    item_id,
+                                    site,
+                                    SUBSTRING_INDEX(site, '-', 1) AS rak 
+                                    FROM 
+                                        item
+                                ) AS itemrak
+                                WHERE SUBSTRING_INDEX(site, '-', 1)='".$lokasiRak_d[0]."' AND rak IS NOT NULL ORDER BY rak ASC;
+                                ");
+            $jumlah_item_d = $jumlah_item_q->fetch_row();
+            $output .=  '<th>'.$jumlah_item_d[0].'</th>';
+
             $output .= '</tr>';
 
             $kolomRak_q = $dbs->query("
-                                    SELECT DISTINCT kolom
+                                    SELECT DISTINCT kolom, baris, rak
                                     FROM
                                     (
-                                        SELECT 
+                                        SELECT
                                         site,
-                                        SUBSTRING_INDEX(SUBSTRING_INDEX(site, '-', 2), '-', -1) AS kolom 
+                                        SUBSTRING_INDEX(SUBSTRING_INDEX(site, '-', 2), '-', -1) AS kolom,
+                                        SUBSTRING_INDEX(SUBSTRING_INDEX(site, '-', 3), '-', -1) AS baris,
+                                        SUBSTRING_INDEX(site, '-', 3) AS rak
                                         FROM 
                                             item
                                     ) AS itemkolom
                                     WHERE SUBSTRING_INDEX(site, '-', 1)='".$lokasiRak_d[0]."' AND kolom IS NOT NULL ORDER BY kolom ASC;
                                 ");
-            //$output .=  '<th>';
-            //$kolomRak_d = $kolomRak_q->fetch_row();
-            while ($kolomRak_d = $kolomRak_q->fetch_row()) {
-                $output .= '<tr>';
-                //Tampilkan kolom rak
-            
-                
-                // $output .=  '<tr>';
-                $output .=  '<th>'.$kolomRak_d[0].'</th>';
-                    //$output .=  '</tr>';
 
-                    // count by item
-                    $item_q = $dbs->query("
-                                        SELECT DISTINCT COUNT(item_id) AS jumlah_item,  itembaris.kolom
+            
+            while ($kolomRak_d = $kolomRak_q->fetch_assoc()) {
+     
+                 $output .= '<tr>';
+
+                 $output .= '<th>'.$kolomRak_d['kolom'].'</th>';
+                 $output .= '<th>'.$kolomRak_d['baris'].'</th>';
+                 $output .= '<th>'.$kolomRak_d['rak'].'</th>';
+                
+
+               // count by item
+                $item_q = $dbs->query("
+                                        SELECT DISTINCT COUNT(item_id) AS jumlah_item
                                         FROM
                                         (
                                             SELECT
                                                 item_id,
-                                                site,
-                                             	SUBSTRING_INDEX(SUBSTRING_INDEX(site, '-', 2), '-', -1) AS kolom 
+                                                site
                                             FROM 
                                                 item
                                         ) AS itembaris
-                                        WHERE SUBSTRING_INDEX(site, '-', 2)='".$lokasiRak_d[0]."-".$kolomRak_d[0]."' AND kolom IS NOT NULL ORDER BY kolom ASC;
+                                        WHERE site='".$kolomRak_d['rak']."' AND (site IS NOT NULL AND site != '') ORDER BY site ASC;
                         ");
-                     $item_d = $item_q->fetch_row();
-                    //while ($item_d = $item_q->fetch_row()) {
-                     $output .=  '<td>'.$item_d[0].'</td>';
-                    //}
+                    $item_d = $item_q->fetch_row();
+
+                    $output .=  '<td>'.$item_d[0].'</td>';
+                  
                 $output .= '</tr>';
+
+               
              }
+             
         }
      }
     
-    $output .= '</table>';
+   $output .= '<tr class="table-warning">';
+   $output .=  '<th>&nbsp;</th>';
+   $output .=  '<th>&nbsp;</th>';
+   $output .=  '<th>Total :</th>';
+    
+   $total_q = $dbs->query("
+                                SELECT DISTINCT COUNT(item_id) AS jumlah_item
+                                FROM
+                                (
+                                    SELECT
+                                    item_id, 
+                                    site
+                                    FROM 
+                                        item
+                                ) AS itemrak
+                                WHERE site IS NOT NULL AND site != '' ORDER BY site ASC;
+                                ");
+   $total_d = $total_q->fetch_row();
+   $output .=  '<th>'.$total_d[0].'</th>';
+   $output .= '</tr>';
+
+   $output .= '</tbody>';
+   $output .= '</table>';
 
     // print out
     echo '<div class="mb-2">'.__('Rekapitulasi Penjajaran').' 
