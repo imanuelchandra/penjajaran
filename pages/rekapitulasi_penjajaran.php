@@ -64,18 +64,6 @@ require SIMBIO.'simbio_GUI/form_maker/simbio_form_element.inc.php';
 require SIMBIO.'simbio_DB/datagrid/simbio_dbgrid.inc.php';
 require MDLBS.'reporting/report_dbgrid.inc.php';
 
-// function httpQuery($query = [])
-// {
-//     return http_build_query(array_unique(array_merge($_GET, $query)));
-// }
-
-// $page_title = 'Items/Copies Report';
-// $reportView = false;
-// $num_recs_show = 20;
-// if (isset($_GET['reportView'])) {
-//     $reportView = true;
-// }
-
 function httpQuery($query = [])
 {
     return http_build_query(array_unique(array_merge($_GET, $query)));
@@ -101,18 +89,14 @@ if (!$reportView) {
         <form method="get" action="<?php echo $_SERVER['PHP_SELF']; ?>" target="reportView" class="form-inline">
             <input type="hidden" name="id" value="<?= $_GET['id']??'' ?>"/>
             <input type="hidden" name="mod" value="<?= $_GET['mod']??'' ?>"/>
-             <div id="filterForm">
-                 <div class="form-group divRow">
-                    <label><?php echo __('Tanggal Penjajaran'); ?></label>
-                    <div class="divRowContent">
+      
+                        <label><?php echo __('Tanggal Penjajaran'); ?></label>
                         <div id="range">
-                            <input type="text" name="tglMulaiPengatalogan">
+                            <input type="text" name="tglMulaiPenjajaran">
                             <span><?= __('to') ?></span>
-                            <input type="text" name="tglSelesaiPengatalogan">
+                            <input type="text" name="tglSelesaiPenjajaran">
                         </div>
-                    </div>
-                </div>
-             </div>
+
             <input type="submit" name="applyFilter" value="<?php echo __('Apply Filter'); ?>" class="btn btn-primary" />
             <input type="hidden" name="reportView" value="true" />
         </form>
@@ -136,6 +120,14 @@ if (!$reportView) {
 	$xls_cc = 0;
     $row_class = 'alterCellPrinted';
 
+     $criteria = '(site IS NOT NULL AND site != \'\')';
+     
+     if (isset($_GET['tglMulaiPenjajaran']) AND !empty($_GET['tglMulaiPenjajaran']) && isset($_GET['tglSelesaiPenjajaran']) AND !empty($_GET['tglSelesaiPenjajaran'])) {
+        $penjajaranDateStart = $dbs->escape_string(trim($_GET['tglMulaiPenjajaran']));
+        $penjajaranDateEnd = $dbs->escape_string(trim($_GET['tglSelesaiPenjajaran']));
+        $criteria .= ' AND (DATE(last_update) >= \'' . $penjajaranDateStart . '\' AND DATE(last_update) <= \'' . $penjajaranDateEnd . '\')';
+    }
+
     $output = '<table border="1">';
     // // header
     $output .= '<thead><tr>
@@ -151,12 +143,13 @@ if (!$reportView) {
                                 FROM
                                 (
                                     SELECT
-                                    site, 
+                                    site,
+                                    last_update, 
                                     SUBSTRING_INDEX(site, '-', 1) AS rak 
                                     FROM 
                                         item
                                 ) AS itemrak
-                                WHERE rak IS NOT NULL AND rak != '' ORDER BY rak ASC;
+                                WHERE site IS NOT NULL AND site != '' ORDER BY rak ASC;
                                 ");
        
      $output .= '<tbody>';
@@ -179,11 +172,12 @@ if (!$reportView) {
                                     SELECT 
                                     item_id,
                                     site,
+                                    last_update,
                                     SUBSTRING_INDEX(site, '-', 1) AS rak 
                                     FROM 
                                         item
                                 ) AS itemrak
-                                WHERE SUBSTRING_INDEX(site, '-', 1)='".$lokasiRak_d[0]."' AND rak IS NOT NULL ORDER BY rak ASC;
+                                WHERE SUBSTRING_INDEX(site, '-', 1)='".$lokasiRak_d[0]."' AND $criteria ORDER BY rak ASC;
                                 ");
             $jumlah_item_d = $jumlah_item_q->fetch_row();
             $output .=  '<th>'.$jumlah_item_d[0].'</th>';
@@ -196,13 +190,14 @@ if (!$reportView) {
                                     (
                                         SELECT
                                         site,
+                                        last_update,
                                         SUBSTRING_INDEX(SUBSTRING_INDEX(site, '-', 2), '-', -1) AS kolom,
                                         SUBSTRING_INDEX(SUBSTRING_INDEX(site, '-', 3), '-', -1) AS baris,
                                         SUBSTRING_INDEX(site, '-', 3) AS rak
                                         FROM 
                                             item
                                     ) AS itemkolom
-                                    WHERE SUBSTRING_INDEX(site, '-', 1)='".$lokasiRak_d[0]."' AND kolom IS NOT NULL ORDER BY kolom ASC;
+                                    WHERE SUBSTRING_INDEX(site, '-', 1)='".$lokasiRak_d[0]."' AND site IS NOT NULL AND site != '' ORDER BY kolom ASC;
                                 ");
 
             
@@ -222,11 +217,12 @@ if (!$reportView) {
                                         (
                                             SELECT
                                                 item_id,
-                                                site
+                                                site,
+                                                last_update
                                             FROM 
                                                 item
                                         ) AS itembaris
-                                        WHERE site='".$kolomRak_d['rak']."' AND (site IS NOT NULL AND site != '') ORDER BY site ASC;
+                                        WHERE site='".$kolomRak_d['rak']."' AND $criteria ORDER BY site ASC;
                         ");
                     $item_d = $item_q->fetch_row();
 
@@ -251,11 +247,12 @@ if (!$reportView) {
                                 (
                                     SELECT
                                     item_id, 
-                                    site
+                                    site,
+                                    last_update
                                     FROM 
                                         item
                                 ) AS itemrak
-                                WHERE site IS NOT NULL AND site != '' ORDER BY site ASC;
+                                WHERE $criteria ORDER BY site ASC;
                                 ");
    $total_d = $total_q->fetch_row();
    $output .=  '<th>'.$total_d[0].'</th>';
