@@ -22,25 +22,6 @@
 
 /* Item List */
 
-// key to authenticate
-// define('INDEX_AUTH', '1');
-
-// // main system configuration
-
-// // IP based access limitation
-// require LIB . 'ip_based_access.inc.php';
-// do_checkIP('smc');
-// do_checkIP('smc-reporting');
-// // start the session
-// require SB . 'admin/default/session.inc.php';
-// require SB . 'admin/default/session_check.inc.php';
-// // privileges checking
-// $can_read = utility::havePrivilege('reporting', 'r');
-// $can_write = utility::havePrivilege('reporting', 'w');
-
-// if (!$can_read) {
-//     die('<div class="errorBox">' . __('You don\'t have enough privileges to access this area!') . '</div>');
-// }
 defined('INDEX_AUTH') OR die('Direct access not allowed!');
 
 //require '../../../sysconfig.inc.php';
@@ -135,7 +116,7 @@ if (!$reportView) {
         <th>'.__('Baris Rak').'</th>
         <th>'.__('Lokasi Rak').'</th>
         <th>'.__('Eksemplar').'</th></tr></thead>';
-	$xlsrows = array($xls_rc => array(__('Unit Rak'),__('Kolom Rak'),__('Baris Rak'),__('Eksemplar')));
+	$xlsrows = array($xls_rc => array(__('Unit Rak dan Kolom'),__('Baris Rak'),__('Lokasi Rak'),__('Eksemplar')));
 	$xls_rc++;
     
      $lokasiRak_q = $dbs->query("
@@ -181,6 +162,9 @@ if (!$reportView) {
                                 ");
             $jumlah_item_d = $jumlah_item_q->fetch_row();
             $output .=  '<th>'.$jumlah_item_d[0].'</th>';
+
+            $xlsrows[$xls_rc] = array($lokasiRak_d[0],' ',' ',$jumlah_item_d[0]);
+			$xls_rc++;
 
             $output .= '</tr>';
 
@@ -228,6 +212,9 @@ if (!$reportView) {
 
                     $output .=  '<td>'.$item_d[0].'</td>';
                   
+                 $xlsrows[$xls_rc] = array($kolomRak_d['kolom'],$kolomRak_d['baris'],$kolomRak_d['rak'],$item_d[0]);
+			     $xls_rc++;
+
                 $output .= '</tr>';
 
                
@@ -256,6 +243,10 @@ if (!$reportView) {
                                 ");
    $total_d = $total_q->fetch_row();
    $output .=  '<th>'.$total_d[0].'</th>';
+
+   $xlsrows[$xls_rc] = array(' ',' ','Total ',$total_d[0]);
+   $xls_rc++;
+
    $output .= '</tr>';
 
    $output .= '</tbody>';
@@ -264,7 +255,7 @@ if (!$reportView) {
     // print out
     echo '<div class="mb-2">'.__('Rekapitulasi Penjajaran').' 
     <a href="#" class="s-btn btn btn-default printReport" onclick="window.print()">'.__('Print Current Page').'</a>
-    <a href="../xlsoutput.php" class="s-btn btn btn-default">'.__('Export to spreadsheet format').'</a></div>'."\n";
+    <a href="' . AWB . 'modules/reporting/xlsoutput.php" class="s-btn btn btn-default">'.__('Export to spreadsheet format').'</a></div>'."\n";
     echo $output;
 
 	unset($_SESSION['xlsquery']); 
