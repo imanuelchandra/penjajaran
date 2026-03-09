@@ -221,7 +221,7 @@ if (!$reportView) {
     $reportgrid->setSQLorder('b.title ASC');
 
     // is there any search
-    $criteria = 'b.biblio_id IS NOT NULL ';
+    $criteria = 'b.biblio_id IS NOT NULL AND i.site IS NOT NULL AND i.site != \'\' ';
     //$criteria .= 'AND ba.author_id IN (SELECT DISTINCT author_id FROM mst_author) AND ba.biblio_id=i.biblio_id';
     if (isset($_GET['judul']) and !empty($_GET['judul'])) {
         $keyword = $dbs->escape_string(trim($_GET['judul']));
