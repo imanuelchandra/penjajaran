@@ -15,11 +15,20 @@ Plugins::getInstance()->registerAutoload(__DIR__);
 
 
 $pathPenjajaran = __DIR__ . '/pages/daftar_penjajaran.php';
-$pathRekapPenjajaran = __DIR__ . '/pages/rekapitulasi_penjajaran.php';
+$pathRekapitulasiPenjajaran = __DIR__ . '/pages/rekapitulasi_penjajaran.php';
+$pathLokasiRakPenjajaran = __DIR__ . '/pages/lokasi_rak_penjajaran.php';
 //$path =  __DIR__ . '/pages/inventarisasi.php';
  // Make default group menu
-Plugins::group('Penjajaran/Shelving', function() use($pathPenjajaran, $pathRekapPenjajaran) {
+
+Plugins::group('Penjajaran/Shelving', function() use($pathPenjajaran, $pathRekapitulasiPenjajaran) {
             // Scan all file inside module directory as menu
  Plugins::menu('reporting', 'Daftar Penjajaran Koleksi', $pathPenjajaran);
- Plugins::menu('reporting', 'Rekapitulasi Penjajaran Koleksi', $pathRekapPenjajaran);
+ Plugins::menu('reporting', 'Rekapitulasi Penjajaran Koleksi', $pathRekapitulasiPenjajaran);
+
+});
+
+
+Plugins::group('Penjajaran/Shelving', function() use($pathLokasiRakPenjajaran) {
+            // Scan all file inside module directory as menu
+  Plugins::menu('reporting', 'Lokasi Rak', $pathLokasiRakPenjajaran);
 });
