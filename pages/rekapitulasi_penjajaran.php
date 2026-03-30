@@ -142,7 +142,7 @@ if (!$reportView) {
                     ?>
                 </div>
                 <div class="form-group divRow">
-                    <label><?php echo __('Tanggal Pengatalogan'); ?></label>
+                    <label><?php echo __('Tanggal Penjajaran'); ?></label>
                     <div class="divRowContent">
                         <div id="range">
                             <input type="text" name="tglMulaiPengatalogan">
