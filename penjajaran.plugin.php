@@ -11,7 +11,7 @@ use SLiMS\Plugins;
 
 $plugin = Plugins::getInstance();
 
-Plugins::getInstance()->registerAutoload(__DIR__);
+//Plugins::getInstance()->registerAutoload(__DIR__);
 
 
 $pathPenjajaran = __DIR__ . '/pages/daftar_penjajaran.php';
